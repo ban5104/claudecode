@@ -116,4 +116,4 @@
 
 ---
 
-
+*made from a combination of using claude code and this awesome article anthropic put out - https://www.anthropic.com/engineering/claude-code-best-practices*
