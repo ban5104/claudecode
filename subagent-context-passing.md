@@ -2,7 +2,7 @@
 
 ## Key Discovery: Context Control Through Description Fields
 
-### Official Explanation from Claude Code Team
+### Explanation from Sid from the Claude Code Team at Anthropic
 
 > "Controlling Context Passage: You can specify in the description what context you want the sub-agent to receive. For example, if you want the sub-agent to always get the file paths of all files the parent agent has, you would specify that in the description, and the parent agent will follow that instruction when it calls the sub-agent. This gives users a lot of control over both what goes into the sub-agent and what comes out, simply by prompting."
 
