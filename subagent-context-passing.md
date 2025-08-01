@@ -27,57 +27,22 @@ The parent agent:
 - Gathers relevant content from the main conversation
 - Passes both the task AND gathered context to the subagent
 
-## The Context Degradation Solution
+## Full Control Over Inputs and Outputs
 
-### The Problem
-As conversations grow longer, early context gets buried:
-- Messages 1-3: Agent reads important config files
-- Messages 4-8: Discussion continues
-- Message 9: Need something from those early files
-- Result: Details are forgotten or deprioritized
+Users have significant control over both what goes into sub-agents and what comes out:
 
-### The Insight
-Subagents provide "fresh context windows" that solve this problem:
-- **Fresh start** - New context window, not buried under conversation history
-- **Curated relevance** - Only files that were important enough to read
-- **Focused attention** - Subagent sees ONLY relevant files + specific task
-- **Perfect recall** - Early file details are as fresh as recent ones
+### Controlling Inputs (Context Management)
+- The parent agent decides when to use sub-agents and what context to pass based on the conversation
+- Users directly influence this through the **description field**
+- The description tells the parent agent:
+  - When to call the sub-agent
+  - How to call the sub-agent
+  - What context to pass into it
+- Example: Specifying that a sub-agent should "always receive the file paths of all files the parent agent has"
 
-## Effective Workflow Pattern
+### Controlling Outputs (Reporting Back)
+- Sub-agents determine what information to return when reporting back to the parent
+- This is guided by the **system prompt** you define for the sub-agent
+- You control what gets passed out of the sub-agent back to the parent thread through prompting
 
-### Best Practice: Hybrid Approach
-
-```yaml
-description: "Review code changes. Always include:
-1. Any project standards files (STANDARDS.md, CONTRIBUTING.md, etc)  
-2. Config files the parent has seen (.eslintrc, .prettierrc, tsconfig)
-3. Example code files that demonstrate project patterns
-4. All code files that need review
-If no explicit standards exist, analyze 2-3 existing files to infer patterns"
-```
-
-### Why This Works
-- Leverages exploration already done in main conversation
-- No redundant file reading or token waste
-- Combines explicit standards with discovered patterns
-- Subagent gets concentrated, relevant context
-
-## Key Distinctions
-
-### Description vs System Prompt
-- **System Prompt**: Defines the subagent's role and approach
-- **Description**: Controls what context flows from parent → subagent
-- **Together**: Role + Context = Optimal Performance
-
-### Context Passing vs Self-Discovery
-- **With Description**: "Here's CLAUDE.md content we discussed + insights"
-- **Without Context**: "Go find and read CLAUDE.md yourself"
-
-## Practical Benefits
-
-1. **Combat Context Degradation** - Fresh windows with curated context
-2. **Efficient Token Usage** - No re-reading files already explored
-3. **Preserve Insights** - Conversation learnings transfer to subagents
-4. **Flexible Control** - Natural language instructions for context flow
-
-This pattern essentially uses subagents as "context-aware specialists" that receive a fresh, focused view of exactly what matters for their specific task.
+**Key Insight:** The description and system prompt fields work together - description controls information flow IN, system prompt controls information flow OUT, giving users precise control over sub-agent behavior.
