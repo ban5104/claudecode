@@ -1,168 +1,192 @@
-# Agent Workflow Overview
+# Agent Decision Matrix
 
-## Core Development Workflow
+## QUICK AGENT SELECTION (Scan First)
 
-Your development process follows a structured pipeline with specialized agents working in sequence:
+| Scenario | Primary Agent | Follow-up Agent | Notes |
+|----------|---------------|-----------------|-------|
+| New feature start | `feature-analyzer` | `code-architect` | Always start here |
+| Have architecture ready | `tdd-test-specialist` | `code-implementation` | TDD approach |
+| Have architecture ready (fast) | `code-implementation` | `test-runner` | Traditional approach |
+| Code written, needs review | `code-reviewer` | `code-simplifier` (if complex) | Quality gate |
+| Tests need running | `test-runner` | - | Minimal context |
+| Feature complete, no E2E tests | `e2e-test-discoverer` | `e2e-test-verifier` | Proactive testing |
+| E2E tests exist, need verification | `e2e-test-verifier` | - | Quality gate |
+| Bug reported | `feature-analyzer` | `tdd-test-specialist` | Understand → Test → Fix |
+| Code too complex | `code-simplifier` | `test-runner` | Maintain functionality |
 
-### 1. **Feature Analyzer** (Opus) → Discovery Phase
-- **Purpose**: Deep-dive analysis of existing codebase patterns
-- **Examines**: Related files, project docs (CLAUDE.md, README.md), similar implementations, architectural patterns
-- **Output**: Comprehensive analysis report with patterns, conventions, and recommendations
-- **When to use**: First step for any new feature or major modification
+## AGENT ROSTER
 
-### 2. **Code Architect** (Opus) → Planning Phase  
-- **Purpose**: Transform requirements into actionable implementation plans
-- **Input**: Feature Analyzer report + user requirements + technical constraints
-- **Creates**: Detailed architectural design, component breakdown, API specs, data models, implementation sequence
-- **When to use**: After feature analysis, before writing any code
+### Analysis & Planning (Opus)
+- **`feature-analyzer`**: Understand codebase patterns, existing implementations
+- **`code-architect`**: Create implementation plans, design APIs, define architecture
 
-### 3. **TDD Test Specialist** (Sonnet) → Test-First Phase
-- **Purpose**: Create comprehensive failing tests that drive implementation
-- **Process**: Analyze requirements → Generate test cases → Write failing tests → Run to verify failure → Commit tests
-- **Focus**: Behavior-driven tests, edge cases, error handling, AAA pattern (Arrange, Act, Assert)
-- **Output**: Complete test suite that defines expected behavior
-- **When to use**: After architecture, before implementation (TDD workflow)
+### Implementation (Sonnet) 
+- **`tdd-test-specialist`**: Write comprehensive failing tests first
+- **`code-implementation`**: Write code following established patterns  
+- **`code-reviewer`**: Quality assurance, security, standards compliance
+- **`code-simplifier`**: Reduce complexity while maintaining functionality
 
-### 4. **Code Implementation** (Sonnet) → Execution Phase
-- **Purpose**: Convert architectural plans into working code that passes tests
-- **Follows**: Established patterns religiously - never creates new conventions
-- **Process**: Foundation → Core Implementation → Integration → Make tests pass → Debug
-- **When to use**: After tests are written (TDD) or after architectural planning (traditional)
+### Testing & Verification
+- **`test-runner`** (Haiku): Execute tests, report results (minimal context needed)
+- **`e2e-test-discoverer`** (Multi-model): Autonomously generate E2E tests
+- **`e2e-test-verifier`** (Multi-model): Verify E2E test quality (READ-ONLY)
 
-### 5. **Code Reviewer** (Sonnet) → Quality Assurance Phase
-- **Purpose**: Ensure code quality, security, and standards compliance
-- **Checks**: 
-  - Project standards (CLAUDE.md), linting rules, security vulnerabilities
-  - Test coverage and quality
-  - **TDD Overfitting**: Verifies implementation handles cases beyond test scenarios
-- **Output**: Structured feedback by severity (Critical → Major → Minor → Suggestions)
-- **When to use**: After initial implementation, especially critical in TDD to prevent overfitting
+## WORKFLOW DECISION TREE
 
-### 6. **Code Simplifier** (Sonnet) → Refinement Phase
+### 1. STARTING POINT
+```
+New Task → What type?
+├── Feature Development → Go to 2
+├── Bug Fix → feature-analyzer → tdd-test-specialist → code-implementation
+├── Refactoring → feature-analyzer → code-reviewer → tdd-test-specialist → code-simplifier  
+└── Testing Only → Go to 4
+```
+
+### 2. FEATURE DEVELOPMENT
+```
+feature-analyzer → code-architect → Choose approach:
+├── TDD (complex/unclear): tdd-test-specialist → code-implementation
+└── Traditional (simple/known): code-implementation → tdd-test-specialist
+```
+
+### 3. POST-IMPLEMENTATION
+```
+Code Complete → test-runner → code-reviewer → Decision:
+├── Issues Found → code-simplifier → test-runner
+├── Production Critical → Create E2E Worktree (See Section 4)
+└── Ready → Deploy
+```
+
+### 4. E2E TESTING (Parallel Development)
+```
+Create Worktree: git worktree add ../project-e2e -b feature/e2e-tests
+├── e2e-test-discoverer (generate tests)
+└── e2e-test-verifier (quality gate)
+→ Merge back to main
+```
+
+## CRITICAL RULES
+
+### TDD Workflow
+1. **Tests First**: `tdd-test-specialist` writes & commits failing tests
+2. **No Test Edits**: `code-implementation` cannot modify tests  
+3. **Overfitting Check**: `code-reviewer` must verify implementation handles cases beyond tests
+4. **Commit Order**: Tests committed first, implementation only after review passes
+
+### Context Passing
+- **Always pass FULL content** between agents, never just filenames
+- **Include**: All relevant files, docs, error messages, previous findings
+- **Preserve**: Error context, debugging information, architectural decisions
+
+### Pattern Adherence  
+- **Implementation agents**: NEVER create new patterns, always follow existing
+- **When unsure**: Copy from similar features found by `feature-analyzer`
+- **E2E tests**: Follow existing test patterns when available
+
+### Quality Gates
+- **All tests must pass** before considering complete
+- **E2E Test Verifier** provides independent verification (cannot modify tests)
+- **Code review feedback** must be addressed before final commit
+
+## PARALLEL DEVELOPMENT
+
+### Git Worktree Strategy
+```bash
+# Main feature development
+git checkout -b feature/user-auth
+
+# After core implementation complete:
+git worktree add ../project-e2e -b feature/e2e-auth
+cd ../project-e2e
+# Run e2e-test-discoverer → e2e-test-verifier
+
+# Integration
+cd ../project  
+git merge feature/e2e-auth
+git worktree remove ../project-e2e
+```
+
+### Benefits
+- **Non-blocking**: E2E testing in parallel with development
+- **Isolated**: Separate environments prevent conflicts  
+- **Quality**: Independent verification ensures reliability
+
+## AGENT CAPABILITIES
+
+### `feature-analyzer` (Opus)
+- **Purpose**: Deep codebase analysis  
+- **Examines**: Related files, docs, patterns, architecture
+- **Output**: Comprehensive analysis with recommendations
+- **Context**: Include project docs, similar features, architectural constraints
+
+### `code-architect` (Opus)  
+- **Purpose**: Transform requirements into implementation plans
+- **Input**: Feature analyzer report + requirements + constraints
+- **Creates**: Architecture, APIs, data models, implementation sequence
+- **Context**: Full feature analysis, technical requirements, existing patterns
+
+### `tdd-test-specialist` (Sonnet)
+- **Purpose**: Write comprehensive failing tests that drive implementation  
+- **Process**: Requirements → Test cases → Failing tests → Commit → Verify failure
+- **Focus**: Behavior-driven, edge cases, AAA pattern
+- **Context**: Architecture plans, feature requirements, existing test patterns
+
+### `code-implementation` (Sonnet)
+- **Purpose**: Write code following established patterns
+- **Process**: Foundation → Implementation → Integration → Pass tests  
+- **Rules**: Never create new patterns, follow existing conventions religiously
+- **Context**: Architecture plans, test files, similar implementations, project patterns
+
+### `code-reviewer` (Sonnet)  
+- **Purpose**: Quality assurance and standards compliance
+- **Checks**: Security, standards, test coverage, TDD overfitting prevention
+- **Output**: Structured feedback (Critical → Major → Minor → Suggestions)
+- **Context**: All code files, project standards, test files, implementation plans
+
+### `code-simplifier` (Sonnet)
 - **Purpose**: Reduce complexity while maintaining functionality
-- **Focus**: Readability, maintainability, DRY principles, reducing nesting
-- **Constraint**: Never sacrifice correctness for simplicity
-- **When to use**: After code review identifies complexity issues
+- **Focus**: Readability, DRY principles, reduced nesting
+- **Constraint**: Never sacrifice correctness for simplicity  
+- **Context**: Code review feedback, complexity metrics, test files
 
-### 7. **Test Runner** (Haiku) → Verification Phase
-- **Purpose**: Execute tests and provide clear result summaries
-- **Actions**: Discover test commands, run appropriate tests, report results
-- **Output**: Structured test execution summary with pass/fail stats
-- **When to use**: After any code changes, minimal context needed
+### `test-runner` (Haiku)
+- **Purpose**: Execute tests and report results
+- **Actions**: Discover commands, run tests, summarize results
+- **Context**: Minimal - just test configuration and recent changes
 
-## Workflow Patterns
+### `e2e-test-discoverer` (Multi-model) 
+- **Purpose**: Autonomously generate comprehensive E2E tests
+- **Process**: Explore app → Map flows → Generate scenarios → Write tests
+- **Focus**: User journeys, auth flows, CRUD, edge cases
+- **Context**: App URLs, existing E2E patterns, project docs, UI components
 
-### TDD Feature Development
+### `e2e-test-verifier` (Multi-model)
+- **Purpose**: Independent E2E test verification (READ-ONLY)  
+- **Actions**: Run tests, analyze failures, assess quality, provide feedback
+- **Output**: Verification reports with screenshots, metrics, recommendations
+- **Context**: E2E test files, test configs, app URLs, previous test errors
+
+## WORKFLOW EXAMPLES
+
+### Simple Feature (Traditional)
 ```
-Feature Analyzer → Code Architect → TDD Test Specialist → Code Implementation → Test Runner → Code Reviewer → Final Commit
-                                           ↓                        ↓                              ↓
-                                    (commits tests)          (iterates until pass)    (verify not overfitted)
-                                                                                           ↓ (if complex)
-                                                                                    Code Simplifier → Test Runner
-```
-
-**Key TDD Steps:**
-1. TDD Test Specialist writes & commits failing tests
-2. Code Implementation iterates until tests pass (no test modifications allowed)
-3. Code Reviewer verifies implementation isn't overfitted to tests
-4. Final commit only after overfitting check passes
-
-### Traditional Feature Development (Test-After)
-```
-Feature Analyzer → Code Architect → Code Implementation → Write Tests → Test Runner → Code Reviewer
-                                            ↓                    ↓            ↓              ↓ (if complex)
-                                    (implement feature)    (add tests)  (verify pass)   Code Simplifier → Test Runner
+feature-analyzer → code-architect → code-implementation → test-runner → code-reviewer → deploy
 ```
 
-Note: Tests can be written by:
-- Code Implementation agent (includes tests with feature)
-- TDD Test Specialist (used retroactively for comprehensive tests)
-- Developer manually
-
-### Bug Fixing Workflow (TDD)
+### Complex Feature (TDD + E2E)
 ```
-Feature Analyzer (understand context) → TDD Test Specialist (regression tests) → Code Implementation (fix) → Test Runner → Code Reviewer
+Main: feature-analyzer → code-architect → tdd-test-specialist → code-implementation → code-reviewer
+Parallel: git worktree → e2e-test-discoverer → e2e-test-verifier → merge
 ```
 
-### Refactoring Workflow (TDD)
+### Bug Fix
 ```
-Feature Analyzer → Code Reviewer (identify issues) → TDD Test Specialist (safety tests) → Code Simplifier → Test Runner
+feature-analyzer → tdd-test-specialist → code-implementation → test-runner → code-reviewer
 ```
 
-## TDD vs Traditional Development
+### Production Critical
+```
+Full pipeline with E2E testing in parallel worktree + comprehensive code review
+```
 
-### Test-Driven Development (TDD)
-- **Red**: Write failing tests first (TDD Test Specialist)
-- **Green**: Implement code to make tests pass (Code Implementation)
-- **Refactor**: Improve code while keeping tests green (Code Simplifier)
-- **Benefits**: Better design, fewer bugs, tests serve as specification
-
-### Traditional Development
-- **Implement**: Write feature code first (Code Implementation)
-- **Test**: Add tests to verify implementation works
-- **Refactor**: Improve code with test safety net
-- **Benefits**: Faster initial development, flexibility in approach
-
-Both approaches require tests - the key difference is **when** tests are written.
-
-### Preventing TDD Overfitting
-
-In TDD, there's a risk of implementing code that ONLY handles the exact test cases. To prevent this:
-
-1. **Code Implementation Rules**:
-   - Cannot modify tests once committed
-   - Must think beyond test scenarios
-   - Should implement general solutions, not test-specific hacks
-
-2. **Code Reviewer Checks**:
-   - Does implementation handle edge cases not in tests?
-   - Is the solution generalizable?
-   - Are there hardcoded values matching test data?
-   - Would similar inputs work correctly?
-
-3. **Red Flags for Overfitting**:
-   - Hardcoded test values in implementation
-   - Switch statements matching exact test cases
-   - Logic that only works for test inputs
-   - Missing validation for untested scenarios
-
-## Key Principles
-
-1. **Agent Selection**:
-   - **Opus** for complex analysis and planning (Feature Analyzer, Code Architect)
-   - **Sonnet** for execution and review (TDD Test Specialist, Implementation, Review, Simplification)
-   - **Haiku** for simple tasks (Test Runner)
-
-2. **Context Passing**:
-   - Always pass full content between agents, not just file names
-   - Include all relevant files, docs, and previous findings
-   - Preserve error messages and debugging context
-
-3. **TDD Workflow**:
-   - TDD Test Specialist writes failing tests FIRST and commits them
-   - Code Implementation iterates until tests pass (NO test modifications)
-   - Code Reviewer MUST verify implementation isn't overfitted to tests
-   - Implementation should handle edge cases beyond test scenarios
-   - Only commit implementation after overfitting check passes
-
-4. **Pattern Adherence**:
-   - Implementation agents NEVER create new patterns
-   - Always follow existing conventions found by Feature Analyzer
-   - When in doubt, copy from similar features
-
-5. **Quality Gates**:
-   - Tests must pass before considering task complete
-   - Code review feedback should be addressed
-   - Complexity issues trigger simplification phase
-
-## Quick Reference
-
-- **Starting a new feature?** → Feature Analyzer first
-- **Have a plan ready?** → TDD Test Specialist (write tests first) → Code Implementation
-- **Fixing a bug?** → TDD Test Specialist (regression tests) → Code Implementation
-- **Code complete?** → Test Runner → Code Reviewer
-- **Too complex?** → Code Simplifier
-- **Just need to run tests?** → Test Runner (minimal context)
-- **Want test-driven approach?** → Use TDD workflow
-
-Remember: Each agent has a specific expertise. Use them in sequence for best results, and always pass complete context between them. Choose the workflow that best fits your current needs.
+Remember: **Each agent has specific expertise** - use them in sequence with complete context for best results.
