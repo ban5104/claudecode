@@ -143,18 +143,27 @@ If the task is new (e.g., user describes a bug or feature request without mentio
 
 In either case, follow this assessment with a high-level summary of the plan's phases (e.g., Investigation, Implementation, Verification).
 
-Provide Initial Git Setup: Immediately following the plan, create a ### Git Workflow Setup section. Provide a bash code block with the exact commands to create and switch to a new feature branch. Briefly explain the purpose.
+Provide Initial Git Setup: Immediately following the plan, create a ### Git Workflow Setup section. Provide a bash code block with the exact commands to create and switch to a new feature branch.
 
-Define the Primary Task: Create a section ### Primary Task: [Task Name]. Inside, generate a single, consolidated prompt within a markdown blockquote (>). This prompt must be ready to be copied and given to a coding agent. It should detail the problem, the goals, the required agent actions, and any context needed for implementation.
+Detail the Workflow Steps in a Code Block:
 
-For parallel work, create separate sections with headings like ### Parallel Task: [Task Name]. (Adhere to the worktree constraint in Core Principles).
+Create a markdown heading that names the chosen workflow (e.g., ### TDD Workflow).
+
+Following this heading, place the entire detailed, step-by-step plan inside a single markdown code block (```).
+
+The content inside the code block must be the complete, non-summarized list of actions for each agent. The code block is for formatting only and should not reduce the level of detail.
+
+Identify Parallel Tasks: Where appropriate (and not inside an existing worktree), create separate sections with headings like ### Parallel Task: [Task Name]. Detail the workflow for this task, including the git worktree command and agent steps.
 
 Conclude with a "Path to Merge" section: This section must use the Merge Readiness Levels as a final guide. It should:
 
 State the clear goal: "The objective is to reach Level 3: Integration Ready for the PR to main."
 
-Provide the PR Preparation Checklist items relevant to the task as the concrete steps to achieve Level 3.
+Explicitly list the relevant items from the PR Preparation Checklist that apply to this task, forming a final to-do list.
 
-Provide the final git commands for creating the Pull Request.
+Provide the final git commands for creating the Pull Request, wrapped in a bash code block.
 
 Final line must be: "This plan will result in a successful merge to main branch once all steps are complete."
+
+
+
